@@ -72,27 +72,26 @@ describe('InventoryService - removeProduct', () => {
         createdAt: new Date(),
       };
 
-      // Mock: product exists initially
+      // Mock: product exists initially for removal
       mockPrisma.product.findUnique.mockResolvedValueOnce(existingProduct);
       mockPrisma.product.delete.mockResolvedValue(existingProduct);
 
       // Remove the product
-      await inventoryService.removeProduct(sku);
+      const removeResult = await inventoryService.removeProduct(sku);
+
+      expect(removeResult).toBeDefined();
+      expect(removeResult.message).toBe('Product removed successfully');
+      expect(mockPrisma.product.delete).toHaveBeenCalledWith({
+        where: { sku },
+      });
 
       // Mock: product no longer exists after removal
       mockPrisma.product.findUnique.mockResolvedValueOnce(null);
 
-      // Verify product is gone
-      const result = await inventoryService.addProduct({
-        name: 'Desktop',
-        sku: 'LAP-002',
-        quantity: 5,
-      });
-
-      expect(result).toBeDefined();
-      expect(mockPrisma.product.delete).toHaveBeenCalledWith({
-        where: { sku },
-      });
+      // Verify trying to remove again throws error
+      await expect(inventoryService.removeProduct(sku)).rejects.toThrow(
+        'Product not found'
+      );
     });
   });
 });

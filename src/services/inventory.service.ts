@@ -62,6 +62,30 @@ export class InventoryService {
   }
 
   /**
+   * Removes a product from inventory by SKU
+   * @param sku Product SKU to remove
+   * @returns Success message
+   * @throws Error if product not found
+   */
+  async removeProduct(sku: string): Promise<{ message: string }> {
+    // Check if product exists
+    const existingProduct = await this.prisma.product.findUnique({
+      where: { sku },
+    });
+
+    if (!existingProduct) {
+      throw new Error('Product not found');
+    }
+
+    // Delete product from database
+    await this.prisma.product.delete({
+      where: { sku },
+    });
+
+    return { message: 'Product removed successfully' };
+  }
+
+  /**
    * Disconnects from the database
    */
   async disconnect(): Promise<void> {
