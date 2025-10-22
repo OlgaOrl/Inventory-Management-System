@@ -48,7 +48,7 @@ describe('InventoryService - Low Stock Alert', () => {
       // Verify notification was sent
       expect(mockNotificationService.sendAlert).toHaveBeenCalled();
       expect(mockNotificationService.sendAlert).toHaveBeenCalledWith(
-        expect.stringContaining('low stock')
+        expect.stringContaining('Low stock')
       );
     });
 

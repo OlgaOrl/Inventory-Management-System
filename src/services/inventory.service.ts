@@ -1,6 +1,8 @@
 import type { PrismaClient } from 'prisma/generated/client';
 import type { CreateProductDto } from '../models/product.interface';
 import type { OperationResult } from '../models/operation-result.interface';
+import type { INotificationService } from './notification.service';
+import { NotificationService } from './notification.service';
 
 // Error messages
 const ERROR_MESSAGES = {
@@ -11,8 +13,10 @@ const ERROR_MESSAGES = {
 
 export class InventoryService {
   private prisma: PrismaClient;
+  private notificationService: INotificationService;
 
-  constructor(prisma?: PrismaClient) {
+  constructor(prisma?: PrismaClient, notificationService?: INotificationService) {
+    // Initialize Prisma client
     if (prisma) {
       this.prisma = prisma;
     } else {
@@ -20,6 +24,9 @@ export class InventoryService {
       const { PrismaClient: PC } = require('prisma/generated/client');
       this.prisma = new PC();
     }
+
+    // Initialize Notification service
+    this.notificationService = notificationService || new NotificationService();
   }
 
   /**
@@ -103,6 +110,30 @@ export class InventoryService {
     });
 
     return { message: 'Product removed successfully' };
+  }
+
+  /**
+   * Checks if product stock is below threshold and sends alert if needed
+   * @param sku Product SKU to check
+   * @param threshold Stock level threshold (default: 5)
+   * @throws Error if product not found
+   */
+  async checkLowStock(sku: string, threshold: number = 5): Promise<void> {
+    // Find product by SKU
+    const product = await this.prisma.product.findUnique({
+      where: { sku },
+    });
+
+    if (!product) {
+      throw new Error(ERROR_MESSAGES.PRODUCT_NOT_FOUND);
+    }
+
+    // Check if stock is below threshold
+    if (product.quantity < threshold) {
+      await this.notificationService.sendAlert(
+        `Low stock alert: Product ${sku} has only ${product.quantity} units left`
+      );
+    }
   }
 
   /**
