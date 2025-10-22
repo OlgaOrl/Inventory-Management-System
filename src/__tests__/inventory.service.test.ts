@@ -1,9 +1,11 @@
 import { InventoryService } from '../services/inventory.service';
 import type { CreateProductDto } from '../models/product.interface';
+import type { INotificationService } from '../services/notification.service';
 
 describe('InventoryService', () => {
   let inventoryService: InventoryService;
   let mockPrisma: any;
+  let mockNotificationService: jest.Mocked<INotificationService>;
 
   beforeEach(() => {
     // Mock Prisma client
@@ -14,7 +16,13 @@ describe('InventoryService', () => {
       },
       $disconnect: jest.fn(),
     };
-    inventoryService = new InventoryService(mockPrisma);
+
+    // Mock Notification Service
+    mockNotificationService = {
+      sendAlert: jest.fn(),
+    };
+
+    inventoryService = new InventoryService(mockPrisma, mockNotificationService);
   });
 
   afterAll(async () => {
