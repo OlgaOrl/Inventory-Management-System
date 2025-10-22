@@ -1,4 +1,5 @@
 import { InventoryService } from '../services/inventory.service';
+import type { CreateProductDto } from '../models/product.interface';
 
 describe('InventoryService', () => {
   let inventoryService: InventoryService;
@@ -11,13 +12,19 @@ describe('InventoryService', () => {
         findUnique: jest.fn(),
         create: jest.fn(),
       },
+      $disconnect: jest.fn(),
     };
     inventoryService = new InventoryService(mockPrisma);
   });
 
+  afterAll(async () => {
+    // Cleanup: disconnect from database
+    await inventoryService.disconnect();
+  });
+
   describe('addProduct', () => {
     it('should add product to inventory when valid data provided', async () => {
-      const productData = {
+      const productData: CreateProductDto = {
         name: 'Laptop',
         sku: 'LAP-001',
         quantity: 10,
@@ -47,7 +54,7 @@ describe('InventoryService', () => {
     });
 
     it('should throw error when SKU already exists', async () => {
-      const productData = {
+      const productData: CreateProductDto = {
         name: 'Laptop',
         sku: 'LAP-001',
         quantity: 10,
@@ -63,7 +70,7 @@ describe('InventoryService', () => {
       mockPrisma.product.findUnique.mockResolvedValue(existingProduct);
 
       // Try to add another product with same SKU
-      const duplicateProduct = {
+      const duplicateProduct: CreateProductDto = {
         name: 'Desktop',
         sku: 'LAP-001',
         quantity: 5,
@@ -76,7 +83,7 @@ describe('InventoryService', () => {
     });
 
     it('should throw error when quantity is negative', async () => {
-      const productData = {
+      const productData: CreateProductDto = {
         name: 'Laptop',
         sku: 'LAP-002',
         quantity: -5,
