@@ -1,6 +1,6 @@
 # Inventory Management System
 
-![Tests](https://github.com/OlgaOrl/Inventory-Management-System/actions/workflows/test.yml/badge.svg)
+[![Tests](https://github.com/OlgaOrl/Inventory-Management-System/actions/workflows/test.yml/badge.svg)](https://github.com/OlgaOrl/Inventory-Management-System/actions/workflows/test.yml)
 
 ## Description
 
