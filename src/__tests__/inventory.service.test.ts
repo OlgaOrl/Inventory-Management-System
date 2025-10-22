@@ -2,9 +2,17 @@ import { InventoryService } from '../services/inventory.service';
 
 describe('InventoryService', () => {
   let inventoryService: InventoryService;
+  let mockPrisma: any;
 
   beforeEach(() => {
-    inventoryService = new InventoryService();
+    // Mock Prisma client
+    mockPrisma = {
+      product: {
+        findUnique: jest.fn(),
+        create: jest.fn(),
+      },
+    };
+    inventoryService = new InventoryService(mockPrisma);
   });
 
   describe('addProduct', () => {
@@ -15,12 +23,27 @@ describe('InventoryService', () => {
         quantity: 10,
       };
 
+      const mockProduct = {
+        id: 1,
+        ...productData,
+        createdAt: new Date(),
+      };
+
+      mockPrisma.product.findUnique.mockResolvedValue(null);
+      mockPrisma.product.create.mockResolvedValue(mockProduct);
+
       const result = await inventoryService.addProduct(productData);
 
       expect(result).toBeDefined();
       expect(result.name).toBe('Laptop');
       expect(result.sku).toBe('LAP-001');
       expect(result.quantity).toBe(10);
+      expect(mockPrisma.product.findUnique).toHaveBeenCalledWith({
+        where: { sku: 'LAP-001' },
+      });
+      expect(mockPrisma.product.create).toHaveBeenCalledWith({
+        data: productData,
+      });
     });
 
     it('should throw error when SKU already exists', async () => {
@@ -30,8 +53,14 @@ describe('InventoryService', () => {
         quantity: 10,
       };
 
-      // Add first product
-      await inventoryService.addProduct(productData);
+      const existingProduct = {
+        id: 1,
+        ...productData,
+        createdAt: new Date(),
+      };
+
+      // Mock that SKU already exists
+      mockPrisma.product.findUnique.mockResolvedValue(existingProduct);
 
       // Try to add another product with same SKU
       const duplicateProduct = {
@@ -43,6 +72,7 @@ describe('InventoryService', () => {
       await expect(inventoryService.addProduct(duplicateProduct)).rejects.toThrow(
         'Product with this SKU already exists'
       );
+      expect(mockPrisma.product.create).not.toHaveBeenCalled();
     });
 
     it('should throw error when quantity is negative', async () => {

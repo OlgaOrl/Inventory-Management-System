@@ -3,9 +3,18 @@
 
 generator client {
   provider = "prisma-client"
-  output   = "../generated/prisma"
+  output   = "./generated"
 }
 
 datasource db {
   provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Product {
+  id        Int     @id @default(autoincrement())
+  name      String
+  sku       String  @unique
+  quantity  Int
+  createdAt DateTime @default(now())
 }
