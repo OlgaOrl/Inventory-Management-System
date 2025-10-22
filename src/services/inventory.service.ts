@@ -1,5 +1,13 @@
 import type { PrismaClient } from 'prisma/generated/client';
 import type { CreateProductDto } from '../models/product.interface';
+import type { OperationResult } from '../models/operation-result.interface';
+
+// Error messages
+const ERROR_MESSAGES = {
+  PRODUCT_NOT_FOUND: 'Product not found',
+  QUANTITY_NEGATIVE: 'Quantity cannot be negative',
+  SKU_DUPLICATE: 'Product with this SKU already exists',
+};
 
 export class InventoryService {
   private prisma: PrismaClient;
@@ -15,12 +23,30 @@ export class InventoryService {
   }
 
   /**
+   * Finds a product by SKU
+   * @param sku Product SKU to find
+   * @returns Product if found
+   * @throws Error if product not found
+   */
+  private async findProductBySku(sku: string) {
+    const product = await this.prisma.product.findUnique({
+      where: { sku },
+    });
+
+    if (!product) {
+      throw new Error(ERROR_MESSAGES.PRODUCT_NOT_FOUND);
+    }
+
+    return product;
+  }
+
+  /**
    * Validates that quantity is not negative
    * @throws Error if quantity is negative
    */
   private validateQuantity(quantity: number): void {
     if (quantity < 0) {
-      throw new Error('Quantity cannot be negative');
+      throw new Error(ERROR_MESSAGES.QUANTITY_NEGATIVE);
     }
   }
 
@@ -34,7 +60,7 @@ export class InventoryService {
     });
 
     if (existingProduct) {
-      throw new Error('Product with this SKU already exists');
+      throw new Error(ERROR_MESSAGES.SKU_DUPLICATE);
     }
   }
 
@@ -67,15 +93,9 @@ export class InventoryService {
    * @returns Success message
    * @throws Error if product not found
    */
-  async removeProduct(sku: string): Promise<{ message: string }> {
-    // Check if product exists
-    const existingProduct = await this.prisma.product.findUnique({
-      where: { sku },
-    });
-
-    if (!existingProduct) {
-      throw new Error('Product not found');
-    }
+  async removeProduct(sku: string): Promise<OperationResult> {
+    // Verify product exists
+    await this.findProductBySku(sku);
 
     // Delete product from database
     await this.prisma.product.delete({
