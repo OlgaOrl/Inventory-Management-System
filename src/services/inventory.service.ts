@@ -3,6 +3,7 @@ import type { CreateProductDto } from '../models/product.interface';
 import type { OperationResult } from '../models/operation-result.interface';
 import type { INotificationService } from './notification.service';
 import { NotificationService } from './notification.service';
+import { LOW_STOCK_THRESHOLD } from '../constants/inventory.constants';
 
 // Error messages
 const ERROR_MESSAGES = {
@@ -15,6 +16,12 @@ export class InventoryService {
   private prisma: PrismaClient;
   private notificationService: INotificationService;
 
+  /**
+   * Creates an instance of InventoryService
+   * Uses dependency injection pattern for testability
+   * @param prisma Optional PrismaClient instance (for testing/mocking)
+   * @param notificationService Optional INotificationService instance (for testing/mocking)
+   */
   constructor(prisma?: PrismaClient, notificationService?: INotificationService) {
     // Initialize Prisma client
     if (prisma) {
@@ -113,12 +120,26 @@ export class InventoryService {
   }
 
   /**
+   * Generates a formatted low stock alert message
+   * @param sku Product SKU
+   * @param quantity Current product quantity
+   * @returns Formatted alert message
+   */
+  private generateLowStockMessage(sku: string, quantity: number): string {
+    return `Low stock alert: Product ${sku} has only ${quantity} units left`;
+  }
+
+  /**
    * Checks if product stock is below threshold and sends alert if needed
    * @param sku Product SKU to check
-   * @param threshold Stock level threshold (default: 5)
+   * @param threshold Stock level threshold (default: LOW_STOCK_THRESHOLD)
+   * @returns Object indicating whether alert was sent
    * @throws Error if product not found
    */
-  async checkLowStock(sku: string, threshold: number = 5): Promise<void> {
+  async checkLowStock(
+    sku: string,
+    threshold: number = LOW_STOCK_THRESHOLD
+  ): Promise<{ alertSent: boolean }> {
     // Find product by SKU
     const product = await this.prisma.product.findUnique({
       where: { sku },
@@ -130,10 +151,12 @@ export class InventoryService {
 
     // Check if stock is below threshold
     if (product.quantity < threshold) {
-      await this.notificationService.sendAlert(
-        `Low stock alert: Product ${sku} has only ${product.quantity} units left`
-      );
+      const message = this.generateLowStockMessage(sku, product.quantity);
+      await this.notificationService.sendAlert(message);
+      return { alertSent: true };
     }
+
+    return { alertSent: false };
   }
 
   /**

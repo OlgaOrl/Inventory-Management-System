@@ -43,9 +43,10 @@ describe('InventoryService - Low Stock Alert', () => {
       // Mock that product exists with low stock
       mockPrisma.product.findUnique.mockResolvedValue(lowStockProduct);
 
-      await inventoryService.checkLowStock(sku);
+      const result = await inventoryService.checkLowStock(sku);
 
-      // Verify notification was sent
+      // Verify alert was sent
+      expect(result.alertSent).toBe(true);
       expect(mockNotificationService.sendAlert).toHaveBeenCalled();
       expect(mockNotificationService.sendAlert).toHaveBeenCalledWith(
         expect.stringContaining('Low stock')
@@ -65,9 +66,10 @@ describe('InventoryService - Low Stock Alert', () => {
       // Mock that product exists with normal stock
       mockPrisma.product.findUnique.mockResolvedValue(normalStockProduct);
 
-      await inventoryService.checkLowStock(sku);
+      const result = await inventoryService.checkLowStock(sku);
 
-      // Verify notification was NOT sent
+      // Verify alert was NOT sent
+      expect(result.alertSent).toBe(false);
       expect(mockNotificationService.sendAlert).not.toHaveBeenCalled();
     });
 
