@@ -1,5 +1,7 @@
 # Inventory Management System
 
+![Tests](https://github.com/OlgaOrl/Inventory-Management-System/actions/workflows/test.yml/badge.svg)
+
 ## Description
 
 A test-driven inventory management system built with TypeScript, demonstrating TDD principles, ORM best practices, and proper use of mocks for unit testing. This project showcases the RED → GREEN → REFACTOR cycle for building robust, maintainable code.
